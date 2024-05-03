@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+  {% block content %}
+  {% include 'inc/header.html' %}
+
+  <header>
+    {% include 'inc/header.html' %}
+  </header>
+
+  <main>
+    <div class="page-section mt-5" id="services">
+      <div class="container">
+            <div class="text-center">
+                <h2 class="title-section">TopUp Requests</h2>
+                <div class="divider mx-auto"></div>
+            </div>
+
+            <div class="table-responsive">
+                <table id="myTable" class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Receiver</th>
+                        <th scope="col">Reference</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Credited Date</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for request in requests %}
+                        <tr>
+                            <th scope="row">{{request.user}}</th>
+                            <td>{{request.reference}}</td>
+                            <td>{{request.amount}}</td>
+                            {% if request.status %}
+                            <td><span class="badge badge-pill badge-success me-1">{{request.status}}</span></td>
+                            {% else %}
+                            <td><span class="badge badge-pill badge-danger me-1">{{request.status}}</span></td>
+                            {% endif %}
+                            <td>{{request.date}}</td>
+                            <td>{{request.credited_at}}</td>
+                            {% if request.status %}
+                            <td><a disabled="true" href="#" class="disabled badge badge-light">Credited</a></td>
+                            {% else %}
+                            <td><a href="{% url 'credit' reference=request.reference %}" class="badge badge-success">Credit</a></td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+      </div>
+  </div> <!-- .page-section -->
+  </main>
+
+  {% include 'inc/footer.html' %}
+
+
+{% endblock %}

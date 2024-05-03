@@ -1,0 +1,61 @@
+
+  <nav class="navbar navbar-expand-lg navbar-light navbar-float">
+    <div class="container">
+      <a href="{% url 'home' %}" class="navbar-brand">CampusData<span class="text-primary">Hub.</span></a>
+
+      <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="navbar-collapse collapse" id="navbarContent">
+        <ul class="navbar-nav ml-lg-4 pt-3 pt-lg-0">
+          <li class="nav-item">
+            <a href="{% url 'services' %}" class="nav-link">Services</a>
+          </li>
+          <li class="nav-item">
+            <a href="mailto:nanayawnti123@gmail.com" class="nav-link">Contact</a>
+          </li>
+          {% if request.user.is_authenticated %}
+          <li class="nav-item">
+            <a href="{% url 'history' %}" class="nav-link">Dashboard</a>
+          </li>
+          {% if request.user.is_superuser %}
+          <li class="nav-item">
+            <a href="{% url 'topup_list' %}" class="nav-link">Requests</a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'credit_user' %}" class="nav-link">Credit User</a>
+          </li>
+          {% endif %}
+          <li class="nav-item">
+            <a href="{% url 'logout' %}" class="nav-link">Log out</a>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a href="{% url 'login' %}" class="nav-link">Log in</a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'signup' %}" class="nav-link">Sign Up</a>
+          </li>
+          {% endif %}
+        </ul>
+
+        {% if request.user.is_authenticated %}
+        <div class="ml-auto">
+          <div class="dropdown">
+          <button href="#" class="btn btn-outline rounded-pill dropdown-toggle" data-toggle="dropdown" aria-expanded="false">{{request.user}}</button>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="{% url 'logout' %}">Log out</a>
+                <a class="dropdown-item" href="{% url 'history' %}">Dashboard</a>
+                {% if request.user.is_superuser %}
+                <a class="dropdown-item" href="{% url 'mtn_admin' %}">MTN Admin</a>
+              <a class="dropdown-item" href="{% url 'bt_admin' %}">Big Time Admin</a>
+              <a class="dropdown-item" href="{% url 'afa_admin' %}">AFA Admin</a>
+              {% endif %}
+            </div>
+          </div>  
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </nav>

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+  {% block content %}
+
+  <header>
+    {% include 'inc/header.html' %}
+    <div class="page-banner home-banner">
+      <div class="container h-100">
+        <div class="row align-items-center h-100">
+          <div class="col-lg-6 py-3 wow fadeInUp">
+            <h1 class="mb-4">Buy Bundles and Browse All Day</h1>
+            <p class="text-lg mb-5">We're here to make your internet experience the best.</p>
+            <a href="{% url 'services' %}" class="btn btn-outline-primary mb-3">Explore</a>
+          </div>
+          <div class="col-lg-6 py-3 wow zoomIn">
+            <div class="img-place">
+              <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_rLfMZE.json"  background="transparent"  speed="1"  style="width: 300px; height: 300px;"  loop  autoplay></lottie-player>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>  
+  
+
+  <main>
+  
+          <div style="border-top: 1px solid #e9e8f5" class="page-section">
+            <div class="container">
+              <div class="text-center wow fadeInUp">
+                <div class="subhead">Why Choose Us</div>
+                <h2 class="title-section">Your <span class="marked">Satisfaction</span> is Our Priority</h2>
+                <div class="divider mx-auto"></div>
+              </div>
+        
+              <div class="row mt-5 text-center">
+                <div class="col-lg-4 py-3 wow fadeInUp">
+                  <i style="color: #6C55F9" class="fa-solid fa-bolt fa-2x"></i>
+                  <h5>High Performance</h5>
+                  <p>Our services provided are with top performance.</p>
+                </div>
+                <div class="col-lg-4 py-3 wow fadeInUp">
+                  <i style="color: #6C55F9" class="fa-solid fa-face-smile fa-2x"></i>
+                  <h5>Friendly Prices</h5>
+                  <p>Our Prices? They are the best you will find out there.</p>
+                </div>
+                <div class="col-lg-4 py-3 wow fadeInUp">
+                  <i style="color: #6C55F9" class="fa-solid fa-headset fa-2x"></i>
+                  <h5>Customer Service</h5>
+                  <p>We're always with you. Your concerns are not ignored.</p>
+                </div>
+              </div>
+            </div> <!-- .container -->
+          </div> <!-- .page-section -->
+  
+  
+    <div class="page-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-6 py-3 wow fadeInLeft">
+            <h2 class="title-section">We're <span class="marked">ready to</span> Serve you with best</h2>
+            <div class="divider"></div>
+            <p class="mb-5">The services we provide are exceptional and bring satisfaction to our customers. We know you will love it. Take our word for it and start using our services.</p>
+            <a href="#" class="btn btn-outline-primary ml-2">See pricing</a>
+          </div>
+          <div class="col-lg-6 py-3 wow zoomIn">
+            <div class="img-place text-center">
+              <img src="{% static 'assets/img/bg_image_3.png' %}" alt="">
+            </div>
+          </div>
+        </div>
+      </div> <!-- .container -->
+    </div> <!-- .page-section -->
+
+  
+    <div class="page-section">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-lg-6 py-3 wow fadeInUp">
+            <h2 class="title-section">Get in Touch</h2>
+            <div class="divider"></div>
+            <p>We'll get to you shortly.<br> We look forward to hearing from you!</p>
+  
+            <ul class="contact-list">
+              <li>
+                <div class="icon"><span class="mai-mail"></span></div>
+                <div class="content"><a href="mailto:nanayawnti123@gmail.com">nanayawnti123@gmail.com</a></div>
+              </li>
+              <li>
+                <div class="icon"><span class="mai-phone-portrait"></span></div>
+                <div class="content"><a href="tel:+233550770213">055 077 0213</a></div>
+              </li>
+            </ul>
+          </div>
+          <div class="col-lg-6 py-3 wow fadeInUp">
+            <div class="subhead">Contact Us</div>
+            <h2 class="title-section">Drop Us a Line</h2>
+            <div class="divider"></div>
+            
+            <form action="#">
+              <div class="py-2">
+                <input type="text" class="form-control" placeholder="Full name">
+              </div>
+              <div class="py-2">
+                <input type="text" class="form-control" placeholder="Email">
+              </div>
+              <div class="py-2">
+                <textarea rows="6" class="form-control" placeholder="Enter message"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary rounded-pill mt-4">Send Message</button>
+            </form>
+          </div>
+        </div>
+      </div> <!-- .container -->
+    </div> <!-- .page-section -->
+  
+  </main>
+
+  {% include 'inc/footer.html' %}
+
+  {% endblock%}

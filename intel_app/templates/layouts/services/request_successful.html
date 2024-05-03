@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+  {% block content %}
+  {% include 'inc/header.html' %}
+
+  <header>
+    {% include 'inc/header.html' %}
+
+    <div class="container mt-5">
+      <div class="page-banner">
+        <div class="row justify-content-center align-items-center h-100">
+          <div class="col-md-6">
+            <nav aria-label="Breadcrumb">
+              <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active"><a href="{% url 'services' %}">Services</a></li>
+                <li class="breadcrumb-item active">Top Up</li>
+              </ul>
+            </nav>
+            <h1 class="text-center">Your Request has been placed successfully</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-section" id="services">
+      <div class="container">
+          <div class="text-center">
+              <h2 class="title-section">Pay to the account below and Get Your Wallet Recharged</h2>
+              <div class="divider mx-auto"></div>
+          </div>
+
+        <form action="" method="post">
+          {% csrf_token %}
+            <div class="row">
+          <div class="form-group col-md-6">
+                <label>Number to pay to:</label>
+                <input disabled  value="{{number}}" class="form-control" >
+          </div>
+          <div class="form-group col-md-6">
+                <label>Account Name:</label>
+                <input disabled  value="{{name}}" class="form-control" >
+          </div>
+                </div>
+            <div class="row">
+          <div class="form-group col-md-6">
+                <label>Channel:</label>
+                <input disabled  value="{{channel}}" class="form-control" >
+          </div>
+          <div class="form-group col-md-6">
+                <label>Reference to use in payment:</label>
+                <input disabled class="form-control" value="{{reference}}">
+          </div>
+                </div>
+        </form>
+
+      </div>
+  </div> <!-- .page-section -->
+  </main>
+
+  {% include 'inc/footer.html' %}
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+{% endblock scripts %}

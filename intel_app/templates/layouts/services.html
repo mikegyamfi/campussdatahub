@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+  {% block content %}
+  {% include 'inc/header.html' %}
+
+  <header>
+    {% include 'inc/header.html' %}
+
+    <div class="container mt-5">
+      <div class="page-banner">
+        <div class="row justify-content-center align-items-center h-100">
+          <div class="col-md-6">
+            <nav aria-label="Breadcrumb">
+              <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active">Services</li>
+              </ul>
+            </nav>
+            <h1 class="text-center">Services</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-section" id="services">
+      <div class="container">
+          <div class="text-center">
+              <h2 class="title-section">Our Services</h2>
+              <div class="divider mx-auto"></div>
+          </div>
+         <div class="row justify-content-center">
+       <div class="col-12 col-lg-auto py-3 wow fadeInLeft">
+         <div class="card-pricing">
+           <div class="header">
+             <div class="price-icon my-1"><i class="fa-solid fa-signal"></i></div>
+             <div class="price-title">AirtelTigo</div>
+           </div>
+           <div class="body py-3">
+             <div class="price-tag">
+               Big Time Bundles
+             </div>
+             <div class="price-info">
+               <p>Choose the plan that is right for you</p>
+             </div>
+           </div>
+           <div class="footer">
+             <a href="{% url 'airtel-tigo' %}" class="btn btn-outline rounded-pill">Buy Now</a>
+           </div>
+         </div>
+       </div>
+
+       <div class="col-12 col-lg-auto py-3 wow fadeInLeft">
+         <div class="card-pricing">
+           <div class="header">
+             <div class="price-icon my-1"><i class="fa-solid fa-signal"></i></div>
+             <div class="price-title">AT Big Time</div>
+           </div>
+           <div class="body py-3">
+             <div class="price-tag">
+               AT Big Time Bundles
+             </div>
+             <div class="price-info">
+               <p>Choose the plan that is right for you</p>
+             </div>
+           </div>
+           <div class="footer">
+             <a href="{% url 'big_time' %}" class="btn btn-outline rounded-pill">Buy Now</a>
+           </div>
+         </div>
+       </div>
+
+       <div class="col-12 col-lg-auto py-3 wow fadeInUp">
+         <div class="card-pricing">
+           <div class="header">
+             <div class="price-icon my-1"><i class="fa-solid fa-signal"></i></div>
+             <div class="price-title">MTN</div>
+           </div>
+           <div class="body py-3">
+             <div class="price-tag">
+               Offers made for You
+             </div>
+             <div class="price-info">
+               <p>Choose the plan that's right for you</p>
+             </div>
+           </div>
+           <div class="footer">
+             <a href="{% url 'mtn' %}" class="btn btn-outline rounded-pill">Buy Now</a>
+           </div>
+         </div>
+       </div>
+
+       <div class="col-12 col-lg-auto py-3 wow fadeInUp">
+         <div class="card-pricing">
+           <div class="header">
+             <div class="price-icon my-1"><i class="fa-solid fa-signal"></i></div>
+             <div class="price-title">AFA Registration</div>
+           </div>
+           <div class="body py-3">
+             <div class="price-tag">
+               AFA Registration
+             </div>
+             <div class="price-info">
+               <p>For MTN Users</p>
+             </div>
+           </div>
+           <div class="footer">
+             <a href="{% url 'afa' %}" class="btn btn-outline rounded-pill">Register</a>
+           </div>
+         </div>
+       </div>
+
+       
+
+     </div>
+      </div>
+  </div> <!-- .page-section -->
+  </main>
+
+  {% include 'inc/footer.html' %}
+
+
+{% endblock %}

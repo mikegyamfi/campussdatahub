@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <meta name="copyright" content="">
+
+  <title>Campus Data Hub</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet"/>
+
+  <link rel="stylesheet" href="{% static 'assets/vendor/animate/animate.css' %}">
+
+  <link rel="stylesheet" href="{% static 'assets/css/bootstrap.css' %}">
+
+  <link rel="stylesheet" href="{% static 'assets/css/maicons.css' %}">
+
+  <link rel="stylesheet" href="{% static '/assets/vendor/owl-carousel/css/owl.carousel.css' %}">
+
+  <link rel="stylesheet" href="{% static 'assets/css/theme.css' %}">
+
+  <style>
+
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+    -moz-appearance: textfield;
+    }
+
+    .swal-modal .swal-text {
+        text-align: center;
+    }
+
+  </style>  
+
+</head>
+
+<body>
+
+      <!-- Back to top button -->
+      <div class="back-to-top"></div>
+
+      {% block content %}
+      
+      
+      {% endblock %}
+
+
+      <script src="https://js.paystack.co/v1/inline.js"></script> 
+      <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+      <script src="https://kit.fontawesome.com/74a104b829.js" crossorigin="anonymous"></script>
+
+      <script src="{% static 'assets/js/jquery-3.5.1.min.js' %}"></script>
+      <script src="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.js"></script>
+      <script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+      <script src="{% static 'assets/js/bootstrap.bundle.min.js' %}"></script>
+    
+      <script src="{% static 'assets/vendor/wow/wow.min.js' %}"></script>
+    
+      <script src="{% static 'assets/vendor/owl-carousel/js/owl.carousel.min.js' %}"></script>
+    
+      <script src="{% static 'assets/vendor/waypoints/jquery.waypoints.min.js' %}"></script>
+    
+      <script src="{% static 'assets/vendor/animateNumber/jquery.animateNumber.min.js' %}"></script>
+    
+      <script src="{% static 'assets/js/google-maps.js' %}"></script>
+    
+      <script src="{% static 'assets/js/theme.js' %}"></script>
+
+
+      <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+       {% block scripts %}
+       
+       {% endblock scripts %}
+       
+       
+
+      <script>
+        {% for msg in messages %}
+            {% if msg.tags == "success" %}
+            swal("{{ msg }}", {button: "Ok", icon:"success"});
+            {% elif msg.tags == "info" %}
+            swal("{{ msg }}", {button: "Ok", icon:"warning", type:"info"},);
+            {% else %}
+            swal("{{ msg }}", {button: "Ok", icon:"error"});
+            {% endif %}
+        {% endfor %}
+      </script>
+
+      <script>
+        let table = new DataTable('#myTable', {
+            responsive: true,
+            ordering: false
+        });
+    </script>
+
+    
+    
+</body>
+</html>

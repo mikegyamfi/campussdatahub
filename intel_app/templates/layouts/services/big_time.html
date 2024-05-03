@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+  {% block content %}
+  {% include 'inc/header.html' %}
+
+  <header>
+    {% include 'inc/header.html' %}
+
+    <div class="container mt-5">
+      <div class="page-banner">
+        <div class="row justify-content-center align-items-center h-100">
+          <div class="col-md-6">
+            <nav aria-label="Breadcrumb">
+              <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active"><a href="{% url 'services' %}">Services</a></li>
+                <li class="breadcrumb-item active">AirtelTigo</li>
+              </ul>
+            </nav>
+            <h1 class="text-center">AirtelTigo Bundles</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-section" id="services">
+      <div class="container">
+          <div class="text-center">
+              <h2 class="title-section">AT Big Time Bundle</h2>
+              <div class="divider mx-auto"></div>
+          </div>
+          <div>
+            {% for error in form.non_field_errors %}
+            <small style="display: block; color: red">{{ error }}</small>
+            {% endfor %}
+            <form method="post" id="tigoPaymentForm">
+              {% csrf_token %}
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="phone">Phone Number</label>
+                  {{form.phone_number}}
+                  <small>Number must be 10 digits. E.g. 0270000000</small>
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="inputPassword4">Bundle Offer</label>
+                  {{form.offers}}
+                </div>
+              </div>
+              <input type="hidden" value={{email}} class="email">
+              <input type="hidden" value={{ref}} class="reference">
+<!--              <button type="submit" class="btn btn-success"> Pay Online</button>-->
+              <button type="button" class="btn btn-primary pay-with-wallet">Pay with Wallet</button>
+              <a style="display: none" class="spinner-border process text-primary mt-2" role="status"></a>
+              <h6 class="mt-2"><i class="fa fa-money"></i> Wallet Balance: GHS {{wallet}}</h6>
+                            <a href="{% url 'topup-info'%}">Want to top up your wallet? Click here!</a>
+            </form>
+          </div>
+      </div>
+  </div> <!-- .page-section -->
+  </main>
+
+  {% include 'inc/footer.html' %}
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const paymentForm = document.getElementById('tigoPaymentForm');
+  let email = $(".email").val()
+  let ref = $(".reference").val()
+  console.log(email + ref)
+  paymentForm.addEventListener("submit", payWithPaystack, false);
+  function payWithPaystack(e) {
+    e.preventDefault();
+    let amount = $(".airtime-input").val()
+    let phonenumber = $(".phone").val()
+    if (phonenumber.toString().length < 10 || phonenumber.toString().length != 10 || phonenumber.toString().length > 10){
+      Swal.fire({text: "Phone number must be 10 digits"})
+      return;
+    }
+
+    let handler = PaystackPop.setup({
+      key: 'pk_live_7055f8c8c4761f55114fb477035e68505b354572',
+      email: email,
+      amount: amount * 100,
+      currency: "GHS",
+      ref: ref, // generates a pseudo-unique reference. Please replace with a reference you generated. Or remove the line entirely so our API will generate one for you
+      // label: "Optional string that replaces customer email"
+      onClose: function(){
+        swal("Transaction Closed");
+        location.reload();
+      },
+      callback: function(response){
+        reference = response.reference
+        let message = 'Payment complete! Reference: ' + response.reference;
+        Swal.fire({text: "Processing your order"})
+        Swal.showLoading();
+        let token = $("input[name=csrfmiddlewaretoken]").val();
+        $.ajax({
+          url: '/services/big_time/',
+          method: "POST",
+          data: {
+            phone: phonenumber,
+            amount: amount,
+            reference: reference,
+            csrfmiddlewaretoken: token,
+          },
+          success: function(response){
+            Swal.fire({text: response.status, icon:response.icon, confirmButtonText:"Okay"}).then((value) => {
+              location.reload()
+            })
+          }
+        })
+      }
+    });
+
+  handler.openIframe();
+}
+
+$("body").on('click', '.pay-with-wallet', function(e){
+    let firstBtn = $(".paystack-btn")
+    let secondBtn = $(".pay-with-wallet")
+    let process = $(".process")
+    firstBtn.css('display', 'none')
+
+    firstBtn.prop('disabled', true)
+    secondBtn.prop('disabled', true)
+    secondBtn.text("Processing...")
+    process.css('display', 'block')
+
+    console.log("yes")
+    e.preventDefault()
+    console.log(email)
+    console.log(ref)
+
+  let token = $("input[name=csrfmiddlewaretoken]").val();
+    let amount = $(".airtime-input").val()
+    let phonenumber = $(".phone").val()
+    if (phonenumber.toString().length < 10 || phonenumber.toString().length !== 10 || phonenumber.toString().length > 10){
+      Swal.fire({text: "Phone number must be 10 digits"})
+      location.reload()
+      return;
+    }
+
+    $.ajax({
+      method: "POST",
+      url: "/big_time_pay_with_wallet/",
+      data: {
+        phone: phonenumber,
+        amount: amount,
+        reference: ref,
+        csrfmiddlewaretoken: token,
+      },
+      success: function (response) {
+        console.log(response.status)
+        Swal.fire({text: response.status, confirmButtonText:"Okay"}).then((value) => {
+              location.reload()
+            })
+      },
+    });
+  })
+</script>
+
+
+
+{% endblock scripts %}
+
+

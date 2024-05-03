@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+  {% block content %}
+  {% include 'inc/header.html' %}
+
+  <header>
+    {% include 'inc/header.html' %}
+  </header>
+
+  <main>
+    <div class="page-section mt-5" id="services">
+      <div class="container">
+            <div class="text-center">
+                <h2 class="title-section">Transaction History</h2>
+                <div class="divider mx-auto"></div>
+                <h5>MTN</h5>
+            </div>
+
+            <div class="table-responsive">
+                <table id="myTable" class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Receiver</th>
+                        <th scope="col">Offer</th>
+                        <th scope="col">Reference</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for txn in txns %}
+                        <tr>
+                            <th scope="row">{{txn.bundle_number}}</th>
+                            <td>{{txn.offer}}</td>
+                            <td>{{txn.reference}}</td>
+                            {% if txn.transaction_status == "Completed" %}
+                            <td><span class="badge badge-pill badge-success me-1">{{txn.transaction_status}}</span></td>
+                            {% else %}
+                            <td><span class="badge badge-pill badge-danger me-1">{{txn.transaction_status}}</span></td>
+                            {% endif %}
+                            <td>{{txn.transaction_date}}</td>
+                            <td><a href="{% url 'mark_as_sent' pk=txn.id %}" class="badge badge-success">Mark as sent</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+      </div>
+  </div> <!-- .page-section -->
+  </main>
+
+  {% include 'inc/footer.html' %}
+
+
+{% endblock %}

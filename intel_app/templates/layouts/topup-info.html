@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+  {% block content %}
+  {% include 'inc/header.html' %}
+
+  <header>
+    {% include 'inc/header.html' %}
+
+    <div class="container mt-5">
+      <div class="page-banner">
+        <div class="row justify-content-center align-items-center h-100">
+          <div class="col-md-6">
+            <nav aria-label="Breadcrumb">
+              <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active"><a href="{% url 'services' %}">Services</a></li>
+                <li class="breadcrumb-item active">Top Up</li>
+              </ul>
+            </nav>
+            <h1 class="text-center">Request for Wallet Top Up</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-section" id="services">
+      <div class="container">
+          <div class="text-center">
+              <h2 class="title-section">Pay and Get Your Wallet Recharged</h2>
+              <div class="divider mx-auto"></div>
+          </div>
+
+        <form action="" method="post">
+          {% csrf_token %}
+          <div class="form-group col-md-6">
+                <label>Amount Paid</label>
+                <input name="amount" class="form-control" type="number" step="0.1" placeholder="100" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Request</button>
+        </form>
+
+      </div>
+  </div> <!-- .page-section -->
+  </main>
+
+  {% include 'inc/footer.html' %}
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+{% endblock scripts %}

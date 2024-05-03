@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+  {% block content %}
+  {% include 'inc/header.html' %}
+
+  <header>
+    {% include 'inc/header.html' %}
+
+    <div class="container mt-5">
+    </div>
+  </header>
+
+  <main>
+    <div class="page-section">
+      <div class="container">
+        <!-- Section: Design Block -->
+<section class="text-center">
+    <!-- Background image -->
+    <div class="p-5 bg-image" style="
+          background-image: url('https://www.mirazon.com/wp-content/uploads/2019/09/MFA-1.png');
+          height: 300px;
+          "></div>
+    <!-- Background image -->
+  
+    <div class="card mx-4 mx-md-5 shadow-5-strong" style="
+          margin-top: -100px;
+          background: hsla(0, 0%, 100%, 0.8);
+          backdrop-filter: blur(30px);
+          ">
+      <div class="card-body py-5 px-md-5">
+  
+        <div class="row d-flex justify-content-center">
+          <div class="col-lg-8">
+            <h2 class="fw-bold mb-5">Sign up now</h2>
+            <form method="post">
+                {% csrf_token %}
+              <!-- 2 column grid layout with text inputs for the first and last names -->
+              <div class="row">
+                <div class="col-md-6 mb-4">
+                    {% if form.first_name.errors %}
+                    <ul>
+                    {% for error in form.first_name.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}
+                  <div class="form-outline">
+                    <label class="form-label" for="form3Example1">First Name</label>
+                    {{form.first_name}}
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    {% if form.last_name.errors %}
+                    <ul>
+                    {% for error in form.last_name.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}
+                  <div class="form-outline">
+                    <label class="form-label" for="form3Example1">Last Name</label>
+                    {{form.last_name}}
+                  </div>
+                </div>
+
+
+                <div class="col-md-12 mb-4">
+                    {% if form.username.errors %}
+                    <ul>
+                    {% for error in form.username.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}
+                  <div class="form-outline">
+                    <label class="form-label" for="form3Example1">Username</label>
+                    {{form.username}}
+                  </div>
+                </div>
+
+              <!-- Email input -->
+              <div class="col-md-12 mb-4">
+                {% if form.email.errors %}
+                    <ul>
+                    {% for error in form.email.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}
+              <div class="form-outline mb-4">
+                <label class="form-label" for="form3Example3">Email address</label>
+                {{form.email}}
+              </div>
+            </div>
+
+
+              <div class="col-md-12 mb-4">
+                {% if form.phone.errors %}
+                    <ul>
+                    {% for error in form.phone.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}
+                <div class="form-outline">
+                  <label class="form-label" for="form3Example2">Phone Number</label>
+                  {{form.phone}}
+                </div>
+              </div>
+
+  
+              <!-- Password input -->
+              <div class="col-md-12 mb-4">
+                {% if form.password1.errors %}
+                    <ul>
+                    {% for error in form.password1.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}
+              <div class="form-outline">
+                <label class="form-label" for="form3Example4">Password</label>
+                {{form.password1}}
+              </div>
+            </div>
+
+              <div class="col-md-12 mb-4">
+                {% if form.password2.errors %}
+                    <ul>
+                    {% for error in form.password2.errors %}
+                        <li><strong>{{ error|escape }}</strong></li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}              
+              <div class="form-outline">
+                <label class="form-label" for="form3Example4">Confirm Password</label>
+                {{form.password2}}
+              </div>
+            </div>
+  
+              <!-- Submit button -->
+              <button type="submit" class="btn btn-primary btn-block mb-4">
+                Sign up
+              </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Section: Design Block --> 
+      </div>
+    </div>    
+  </main>
+
+  {% endblock %}

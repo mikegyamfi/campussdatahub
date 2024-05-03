@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+  {% block content %}
+  {% include 'inc/header.html' %}
+
+  <header>
+    {% include 'inc/header.html' %}
+  </header>
+
+  <main>
+    <div class="page-section mt-5" id="services">
+      <div class="container">
+            <div class="text-center">
+                <h2 class="title-section">Transaction History</h2>
+                  <div>
+                    <a href="{% url 'afa-history' %}" class="btn btn-sm btn-primary">AFA</a>
+                    <a href ="{% url 'mtn-history' %}" class="btn btn-sm btn-outline-primary">MTN</a>
+                    <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary">AirtelTigo</a>
+                     <a href ="{% url 'bt-history' %}" class="btn btn-sm btn-outline-primary">AT Big Time</a>
+                </div>
+
+                <div class="divider mx-auto"></div>
+                <h5>AFA Registrations</h5>
+            </div>
+
+            <div class="table-responsive">
+                <table id="myTable" class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Phone Number</th>
+                        <th scope="col">Reference</th>
+                        <th scope="col">Card#</th>
+                        <th scope="col">Occupation</th>
+                        <th scope="col">Date of Birth</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for txn in txns %}
+                        <tr>
+                            <th scope="row">{{txn.name}}</th>
+                            <td>{{txn.phone_number}}</td>
+                            <td>{{txn.reference}}</td>
+                            <td>{{txn.gh_card_number}}</td>
+                            <td>{{txn.occupation}}</td>
+                            <td>{{txn.date_of_birth}}</td>
+                            {% if txn.transaction_status == "Completed" %}
+                            <td><span class="badge badge-pill badge-success me-1">{{txn.transaction_status}}</span></td>
+                            {% else %}
+                            <td><span class="badge badge-pill badge-danger me-1">{{txn.transaction_status}}</span></td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+      </div>
+  </div> <!-- .page-section -->
+  </main>
+
+  {% include 'inc/footer.html' %}
+
+
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+  {% block content %}
+  {% include 'inc/header.html' %}
+
+  <header>
+    {% include 'inc/header.html' %}
+  </header>
+
+  <main>
+    <div class="page-section mt-5" id="services">
+      <div class="container">
+            <div class="text-center">
+                <h2 class="title-section">Transaction History</h2>
+                {% if net == "tigo" %}
+                <div>
+                    <a href="{% url 'history' %}" class="btn btn-sm btn-primary">AirtelTigo</a>
+                    <a href ="{% url 'mtn-history' %}" class="btn btn-sm btn-outline-primary">MTN</a>
+                    <a href ="{% url 'bt-history' %}" class="btn btn-sm btn-outline-primary">AT Big Time</a>
+                     <a href ="{% url 'afa-history' %}" class="btn btn-sm btn-outline-primary">AFA</a>
+                </div>
+                {% elif net == "mtn" %}
+                <div>
+                    <a href ="{% url 'mtn-history' %}" class="btn btn-sm btn-primary">MTN</a>
+                    <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary">AirtelTigo</a>
+                    <a href="{% url 'bt-history' %}" class="btn btn-sm btn-outline-primary">AT Big Time</a>
+                     <a href ="{% url 'afa-history' %}" class="btn btn-sm btn-outline-primary">AFA</a>
+                </div>
+                {% elif net == "bt" %}
+                <div>
+                    <a href="{% url 'bt-history' %}" class="btn btn-sm btn-primary">AT Big Time</a>
+                    <a href ="{% url 'mtn-history' %}" class="btn btn-sm btn-outline-primary">MTN</a>
+                    <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary">AirtelTigo</a>
+                     <a href ="{% url 'afa-history' %}" class="btn btn-sm btn-outline-primary">AFA</a>
+                </div>
+                {% else %}
+                  <div>
+                    <a href="{% url 'afa-history' %}" class="btn btn-sm btn-primary">AFA</a>
+                    <a href ="{% url 'mtn-history' %}" class="btn btn-sm btn-outline-primary">MTN</a>
+                    <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary">AirtelTigo</a>
+                     <a href ="{% url 'bt-history' %}" class="btn btn-sm btn-outline-primary">AT Big Time</a>
+                </div>
+                {% endif %}
+
+                <div class="divider mx-auto"></div>
+                <h5>{{header}}</h5>
+            </div>
+
+            <div class="table-responsive">
+                <table id="myTable" class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Receiver</th>
+                        <th scope="col">Offer</th>
+                        <th scope="col">Reference</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Date</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for txn in txns %}
+                        <tr>
+                            <th scope="row">{{txn.bundle_number}}</th>
+                            <td>{{txn.offer}}</td>
+                            <td>{{txn.reference}}</td>
+                            {% if txn.transaction_status == "Completed" %}
+                            <td><span class="badge badge-pill badge-success me-1">{{txn.transaction_status}}</span></td>
+                            {% else %}
+                            <td><span class="badge badge-pill badge-danger me-1">{{txn.transaction_status}}</span></td>
+                            {% endif %}
+                            
+                            <td>{{txn.transaction_date}}</td>
+                        </tr>
+                    {% endfor %}    
+                    </tbody>
+                </table>
+            </div>  
+      </div>
+  </div> <!-- .page-section -->
+  </main>
+
+  {% include 'inc/footer.html' %}
+
+
+{% endblock %}
