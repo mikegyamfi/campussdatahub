@@ -29,6 +29,8 @@ SECRET_KEY = "DGFYUGEUGFEFE"
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    'campus-data-hub-z7u5d.ondigitalocean.app',
+    'www.campusdatahub.com'
 ]
 
 
