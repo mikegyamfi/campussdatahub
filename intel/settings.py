@@ -50,14 +50,14 @@ INSTALLED_APPS = [
 
 JAZZMIN_SETTINGS = {
     # title of the window (Will default to current_admin_site.site_title if absent or None)
-    "site_title": "Neon GH",
-    "site_header": "Neon GH",
+    "site_title": "Campus Data Hub",
+    "site_header": "Campus Data Hub",
     # "site_logo": "img/site/bestPay Logo.png",
     # Title on the brand (19 chars max) (defaults to current_admin_site.site_header if absent or None)
-    "site_brand": "Neon GH",
-    "copyright": "Neon GH",
+    "site_brand": "Campus Data Hub",
+    "copyright": "Campus Data Hub",
     # "login_logo": "img/site/bp.png",
-    "welcome_sign": "Welcome to the Neon GH Admin",
+    "welcome_sign": "Welcome to the Campus Data Hub Admin",
     "custom_css": 'css/admin.css',
     "user_avatar": 'user',
 }
