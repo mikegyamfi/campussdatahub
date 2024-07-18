@@ -24,7 +24,7 @@ urlpatterns = [
                   path('history/telecel', views.voda_history, name="voda-history"),
                   path('telecel_admin', views.admin_voda_history, name='voda_admin'),
                   path('telecel_mark_as_sent/<int:pk>', views.voda_mark_as_sent, name='voda_mark_as_sent'),
-                  path('telecel_pay_with_wallet/', views.voda_pay_with_wallet, name='voda_pay_with_wallet'),
+                  path('voda_pay_with_wallet/', views.voda_pay_with_wallet, name='voda_pay_with_wallet'),
 
                   path('mark_as_sent/<int:pk>', views.mark_as_sent, name='mark_as_sent'),
                   path('bt_admin', views.admin_bt_history, name='bt_admin'),
