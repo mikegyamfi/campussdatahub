@@ -49,6 +49,7 @@
                 <a class="dropdown-item" href="{% url 'history' %}">Dashboard</a>
                 {% if request.user.is_superuser %}
                 <a class="dropdown-item" href="{% url 'mtn_admin' %}">MTN Admin</a>
+              <a class="dropdown-item" href="{% url 'voda_admin' %}">Telecel Admin</a>
               <a class="dropdown-item" href="{% url 'bt_admin' %}">Big Time Admin</a>
               <a class="dropdown-item" href="{% url 'afa_admin' %}">AFA Admin</a>
               {% endif %}

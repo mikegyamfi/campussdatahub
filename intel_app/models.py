@@ -238,3 +238,52 @@ class TopUpRequestt(models.Model):
     status = models.BooleanField(default=False, blank=False, null=False)
     date = models.DateTimeField(auto_now_add=True)
     credited_at = models.DateTimeField(auto_now_add=True)
+
+
+class VodaBundlePrice(models.Model):
+    price = models.FloatField(null=False, blank=False)
+    bundle_volume = models.FloatField(null=False, blank=False)
+
+    def __str__(self):
+        if self.bundle_volume >= 1000:
+            return f"GHS{self.price} - {self.bundle_volume / 1000}GB"
+        return f"GHS{self.price} - {self.bundle_volume}MB"
+
+
+class AgentVodaBundlePrice(models.Model):
+    price = models.FloatField(null=False, blank=False)
+    bundle_volume = models.FloatField(null=False, blank=False)
+
+    def __str__(self):
+        if self.bundle_volume >= 1000:
+            return f"GHS{self.price} - {self.bundle_volume / 1000}GB"
+        return f"GHS{self.price} - {self.bundle_volume}MB"
+
+
+class SuperAgentVodaBundlePrice(models.Model):
+    price = models.FloatField(null=False, blank=False)
+    bundle_volume = models.FloatField(null=False, blank=False)
+
+    def __str__(self):
+        if self.bundle_volume >= 1000:
+            return f"GHS{self.price} - {self.bundle_volume / 1000}GB"
+        return f"GHS{self.price} - {self.bundle_volume}MB"
+
+
+class VodafoneTransaction(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    bundle_number = models.BigIntegerField(null=False, blank=False)
+    offer = models.CharField(max_length=250, null=False, blank=False)
+    reference = models.CharField(max_length=20, null=False, blank=True)
+    transaction_date = models.DateTimeField(auto_now_add=True)
+    choices = (
+        ("Pending", "Pending"),
+        ("Completed", "Completed"),
+        ("Processing", "Processing"),
+        ("Failed", "Failed")
+    )
+    transaction_status = models.CharField(max_length=100, choices=choices, default="Pending")
+    description = models.CharField(max_length=500, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.bundle_number} - {self.reference}"

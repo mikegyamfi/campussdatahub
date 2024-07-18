@@ -17,6 +17,7 @@
                     <a href="{% url 'history' %}" class="btn btn-sm btn-primary">AirtelTigo</a>
                     <a href ="{% url 'mtn-history' %}" class="btn btn-sm btn-outline-primary">MTN</a>
                     <a href ="{% url 'bt-history' %}" class="btn btn-sm btn-outline-primary">AT Big Time</a>
+                    <a href="{% url 'voda-history' %}" class="btn btn-sm btn-outline-primary">Telecel</a>
                      <a href ="{% url 'afa-history' %}" class="btn btn-sm btn-outline-primary">AFA</a>
                 </div>
                 {% elif net == "mtn" %}
@@ -24,6 +25,7 @@
                     <a href ="{% url 'mtn-history' %}" class="btn btn-sm btn-primary">MTN</a>
                     <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary">AirtelTigo</a>
                     <a href="{% url 'bt-history' %}" class="btn btn-sm btn-outline-primary">AT Big Time</a>
+                    <a href="{% url 'voda-history' %}" class="btn btn-sm btn-outline-primary">Telecel</a>
                      <a href ="{% url 'afa-history' %}" class="btn btn-sm btn-outline-primary">AFA</a>
                 </div>
                 {% elif net == "bt" %}
@@ -31,13 +33,23 @@
                     <a href="{% url 'bt-history' %}" class="btn btn-sm btn-primary">AT Big Time</a>
                     <a href ="{% url 'mtn-history' %}" class="btn btn-sm btn-outline-primary">MTN</a>
                     <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary">AirtelTigo</a>
+                    <a href="{% url 'voda-history' %}" class="btn btn-sm btn-outline-primary">Telecel</a>
                      <a href ="{% url 'afa-history' %}" class="btn btn-sm btn-outline-primary">AFA</a>
+                </div>
+                {% elif net == "voda" %}
+                <div>
+                    <a href="{% url 'voda-history' %}" class="btn btn-sm btn-primary">Telecel</a>
+                    <a href ="{% url 'mtn-history' %}" class="btn btn-sm btn-outline-primary">MTN</a>
+                    <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary">AirtelTigo</a>
+                     <a href ="{% url 'afa-history' %}" class="btn btn-sm btn-outline-primary">AFA</a>
+                    <a href ="{% url 'bt-history' %}" class="btn btn-sm btn-outline-primary">AT Big Time</a>
                 </div>
                 {% else %}
                   <div>
                     <a href="{% url 'afa-history' %}" class="btn btn-sm btn-primary">AFA</a>
                     <a href ="{% url 'mtn-history' %}" class="btn btn-sm btn-outline-primary">MTN</a>
                     <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary">AirtelTigo</a>
+                      <a href="{% url 'voda-history' %}" class="btn btn-sm btn-outline-primary">Telecel</a>
                      <a href ="{% url 'bt-history' %}" class="btn btn-sm btn-outline-primary">AT Big Time</a>
                 </div>
                 {% endif %}

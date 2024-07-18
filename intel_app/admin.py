@@ -45,6 +45,11 @@ class TopUpRequestAdmin(admin.ModelAdmin):
     list_display = ['user', 'reference', 'amount', 'date', 'status']
 
 
+class VodafoneTransactionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'bundle_number', 'offer', 'reference', 'transaction_status', 'transaction_date']
+    search_fields = ['reference', 'bundle_number']
+
+
 admin.site.register(models.CustomUser, CustomUserAdmin)
 admin.site.register(models.IShareBundleTransaction, IShareBundleTransactionAdmin)
 admin.site.register(models.MTNTransaction, MTNTransactionAdmin)
@@ -62,3 +67,8 @@ admin.site.register(models.SuperAgentMTNBundlePrice)
 admin.site.register(models.BigTimeBundlePrice)
 admin.site.register(models.AgentBigTimeBundlePrice)
 admin.site.register(models.SuperAgentBigTimeBundlePrice)
+
+admin.site.register(models.AgentVodaBundlePrice)
+admin.site.register(models.VodafoneTransaction, VodafoneTransactionAdmin)
+admin.site.register(models.VodaBundlePrice)
+admin.site.register(models.SuperAgentVodaBundlePrice)
