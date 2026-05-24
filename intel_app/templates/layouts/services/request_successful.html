@@ -56,6 +56,17 @@
                 </div>
         </form>
 
+        {% if macrodroid_on %}
+        <div class="text-center mt-4">
+          <p>Already paid? Enter your MoMo Transaction ID to credit your wallet instantly.</p>
+          <a href="{% url 'claim_topup' reference %}" class="btn btn-primary">Claim with Transaction ID</a>
+        </div>
+        {% else %}
+        <div class="text-center mt-4 text-muted">
+          <p>An admin will confirm your payment and credit your wallet shortly.</p>
+        </div>
+        {% endif %}
+
       </div>
   </div> <!-- .page-section -->
   </main>

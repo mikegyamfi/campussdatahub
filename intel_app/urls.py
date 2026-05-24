@@ -48,5 +48,8 @@ urlpatterns = [
 
                   path('login', authViews.login_page, name='login'),
                   path('signup', authViews.sign_up, name='signup'),
-                  path('logout', authViews.logout_user, name="logout")
+                  path('logout', authViews.logout_user, name="logout"),
+
+                  path('momo/webhook', views.momo_webhook_receiver, name='momo_webhook'),
+                  path('topup/claim/<str:reference>', views.claim_topup, name='claim_topup'),
               ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

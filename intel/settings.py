@@ -26,12 +26,21 @@ SECRET_KEY = config("SECRET_KEY")
 # SECRET_KEY = "DGFYUGEUGFEFE"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default="False") == "True"
 
 ALLOWED_HOSTS = [
     'campus-data-hub-z7u5d.ondigitalocean.app',
-    'www.campusdatahub.com'
+    'www.campusdatahub.com',
+    'localhost',
+    '127.0.0.1',
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://campus-data-hub-z7u5d.ondigitalocean.app',
+    'https://www.campusdatahub.com',
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -71,6 +80,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'intel_app.middleware.SchedulerMiddleware',
 ]
 
 ROOT_URLCONF = 'intel.urls'
@@ -97,27 +107,29 @@ WSGI_APPLICATION = 'intel.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'HOST': config("DATABASE_HOST"),
-        'PORT': config("DATABASE_PORT"),
-        'NAME': 'db',
-        'USER': config("DATABASE_USERNAME"),
-        'PASSWORD': config("DATABASE_PASSWORD"),
-        'OPTIONS': {
-            'sslmode': 'require'
+# Local dev uses SQLite; production uses the Postgres block below. Swap via
+# USE_SQLITE env var (set in .env for local, unset / 0 in production).
+if config("USE_SQLITE", default="0") == "1":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'HOST': config("DATABASE_HOST"),
+            'PORT': config("DATABASE_PORT"),
+            'NAME': 'db',
+            'USER': config("DATABASE_USERNAME"),
+            'PASSWORD': config("DATABASE_PASSWORD"),
+            'OPTIONS': {
+                'sslmode': 'require'
+            }
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -161,4 +173,40 @@ STATICFILES_DIRS = [BASE_DIR / 'intel_app/static']
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 AUTH_USER_MODEL = 'intel_app.CustomUser'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '%(levelname)s %(name)s %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'intel_app': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
 

@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% include 'inc/header.html' %}
+
+<header>
+  {% include 'inc/header.html' %}
+
+  <div class="container mt-5">
+    <div class="page-banner">
+      <div class="row justify-content-center align-items-center h-100">
+        <div class="col-md-9">
+          <nav aria-label="Breadcrumb">
+            <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+              <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+              <li class="breadcrumb-item"><a href="{% url 'topup-info' %}">Top Up</a></li>
+              <li class="breadcrumb-item active">Claim</li>
+            </ul>
+          </nav>
+          <div class="subhead">Almost There</div>
+          <h1 class="text-center">Complete Your Top-Up</h1>
+          <p class="text-center mb-0">
+            Reference <strong>{{ reference }}</strong> &middot; Amount <strong>GHS {{ topup_req.amount }}</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .claim-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+    height: 100%;
+    overflow: hidden;
+  }
+  .claim-card .card-header {
+    background: linear-gradient(135deg, #6C55F9 0%, #8e7cff 100%);
+    color: #fff;
+    padding: 1.1rem 1.4rem;
+    border: none;
+  }
+  .claim-card.step-2 .card-header {
+    background: linear-gradient(135deg, #28a745 0%, #5dc66e 100%);
+  }
+  .step-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 0.15rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+  }
+  .claim-card .card-header h4 {
+    margin: 0;
+    font-weight: 600;
+  }
+  .claim-card .card-body {
+    padding: 1.5rem 1.4rem;
+  }
+  .amount-banner {
+    background: linear-gradient(135deg, #fff8e6 0%, #fff2cc 100%);
+    border-left: 4px solid #f0ad4e;
+    padding: 0.9rem 1.1rem;
+    border-radius: 10px;
+    margin-bottom: 1.25rem;
+    font-weight: 500;
+    color: #6b4f1d;
+  }
+  .momo-number {
+    font-family: 'Courier New', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #2c2c54;
+    background: #f5f3ff;
+    border: 2px dashed #cdc3ff;
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid #f0f0f5;
+    font-size: 0.92rem;
+  }
+  .meta-row:last-child { border-bottom: none; }
+  .meta-row .label { color: #6c757d; }
+  .meta-row .value { font-weight: 600; color: #2c2c54; }
+  .channel-chip {
+    display: inline-block;
+    background: rgba(108, 85, 249, 0.10);
+    color: #4a3bd1;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .txn-input {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-align: center;
+    border: 2px solid #e9e8f5;
+    border-radius: 12px;
+    padding: 0.9rem;
+    transition: border-color .2s ease;
+  }
+  .txn-input:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+    outline: none;
+  }
+  .btn-claim {
+    background: linear-gradient(135deg, #28a745 0%, #5dc66e 100%);
+    color: #fff;
+    border: none;
+    width: 100%;
+    font-weight: 600;
+    padding: 0.9rem 0;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(40, 167, 69, 0.3);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn-claim:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(40, 167, 69, 0.4);
+    color: #fff;
+  }
+  .help-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.25rem;
+  }
+  .help-list li {
+    padding: 0.4rem 0;
+    color: #495057;
+    font-size: 0.92rem;
+  }
+  .help-list li i {
+    color: #6C55F9;
+    margin-right: 0.5rem;
+    width: 18px;
+    text-align: center;
+  }
+  .security-note {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 2rem;
+    text-align: center;
+  }
+  .security-note i { color: #28a745; }
+</style>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} wow fadeInDown">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="row">
+
+        <!-- Step 1: Payment instructions -->
+        <div class="col-lg-6 mb-4 wow fadeInLeft">
+          <div class="claim-card step-1">
+            <div class="card-header">
+              <div class="step-badge">Step 1 of 2</div>
+              <h4><i class="fa-solid fa-mobile-screen-button mr-2"></i>Send the Payment</h4>
+            </div>
+            <div class="card-body">
+              <div class="amount-banner">
+                <i class="fa-solid fa-circle-info mr-2"></i>
+                Send <strong>exactly GHS {{ topup_req.amount }}</strong>. A different amount will be rejected.
+              </div>
+
+              <div class="text-center text-muted small mb-1">Send Mobile Money to</div>
+              <div class="momo-number">{{ business_momo_number }}</div>
+
+              <div class="meta-row">
+                <span class="label"><i class="fa-solid fa-user mr-2"></i>Account Name</span>
+                <span class="value">{{ business_momo_name }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="label"><i class="fa-solid fa-network-wired mr-2"></i>Channel</span>
+                <span class="channel-chip">{{ channel }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="label"><i class="fa-solid fa-hashtag mr-2"></i>Your Reference</span>
+                <span class="value text-muted small">{{ reference }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Paste Transaction ID -->
+        <div class="col-lg-6 mb-4 wow fadeInRight">
+          <div class="claim-card step-2">
+            <div class="card-header">
+              <div class="step-badge">Step 2 of 2</div>
+              <h4><i class="fa-solid fa-paste mr-2"></i>Enter Your Transaction ID</h4>
+            </div>
+            <div class="card-body">
+              <ul class="help-list">
+                <li><i class="fa-solid fa-envelope-open-text"></i>MobileMoney will text the phone you paid from.</li>
+                <li><i class="fa-solid fa-magnifying-glass"></i>Look for <strong>Transaction ID</strong> (or "Financial Transaction Id") &mdash; 10&ndash;12 digits.</li>
+                <li><i class="fa-solid fa-bolt"></i>Paste it below. Your wallet is credited instantly.</li>
+              </ul>
+
+              <form method="POST" action="{% url 'claim_topup' reference %}">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                  <input type="text" name="transaction_id" class="form-control txn-input"
+                         placeholder="e.g. 73958990227" required autocomplete="off" inputmode="numeric">
+                </div>
+                <button type="submit" class="btn btn-claim">
+                  <i class="fa-solid fa-check-circle mr-1"></i> Verify &amp; Credit Wallet
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-md-10">
+          <div class="security-note">
+            <i class="fa-solid fa-shield-halved mr-1"></i>
+            <strong>Keep your Transaction ID private.</strong> It can only be claimed once &mdash; anyone who has it can claim the funds before you do. Treat it like a one-time password.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+{% include 'inc/footer.html' %}
+{% endblock %}
+
+{% block scripts %}
+{% endblock scripts %}

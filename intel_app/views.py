@@ -1,8 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from decimal import Decimal
+import logging
 
 from decouple import config
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseRedirect
+from django.db import transaction as db_transaction
+from django.utils import timezone
 import requests
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -10,9 +14,51 @@ import json
 from . import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from . import helper, models
+from . import geosams, helper, models
 from .forms import UploadFileForm
 from .models import CustomUser
+from .utils import parse_momo_sms
+
+logger = logging.getLogger(__name__)
+
+MACRODROID_SECRET = config("MACRODROID_SECRET", default=None)
+
+
+def _submit_to_geosams(transaction, network, phone_number, amount_mb, reference):
+    """
+    Submit a Pending transaction row to the Geosams Controller API.
+    Mutates the row in place; returns (user_message, rejected_bool).
+    Caller refunds the wallet on rejection.
+    """
+    result = geosams.send_bundle(phone_number, amount_mb, network, reference)
+    if result.accepted:
+        transaction.submitted_to_api = True
+        transaction.description = (result.message or "submitted")[:500]
+        transaction.save()
+        return "Your transaction has been submitted and will complete shortly.", False
+    if result.retryable:
+        transaction.submitted_to_api = True
+        transaction.description = f"queued; will retry: {result.message}"[:500]
+        transaction.save()
+        return "Your transaction is queued and will retry shortly.", False
+    transaction.transaction_status = "Failed"
+    transaction.description = (result.message or "rejected")[:500]
+    transaction.save()
+    logger.warning("Geosams rejected %s (code=%s): %s", reference, result.code, result.message)
+    return f"Transaction rejected: {result.message}", True
+
+
+def _api_enabled(network):
+    admin = models.AdminInfo.objects.filter().first()
+    if admin is None:
+        return False
+    if network == geosams.NETWORK_MTN:
+        return bool(admin.mtn_api_enabled)
+    if network == geosams.NETWORK_TELECEL:
+        return bool(admin.telecel_api_enabled)
+    if network == geosams.NETWORK_AT:
+        return bool(admin.at_api_enabled)
+    return False
 
 
 # Create your views here.
@@ -26,117 +72,45 @@ def services(request):
 
 def pay_with_wallet(request):
     if request.method == "POST":
-        admin = models.AdminInfo.objects.filter().first().phone_number
+        admin_info = models.AdminInfo.objects.filter().first()
+        admin_phone = admin_info.phone_number if admin_info else ""
         user = models.CustomUser.objects.get(id=request.user.id)
         phone_number = request.POST.get("phone")
         amount = request.POST.get("amount")
         reference = request.POST.get("reference")
-        if user.wallet is None:
+        if user.wallet is None or user.wallet <= 0 or user.wallet < float(amount):
             return JsonResponse(
-                {'status': f'Your wallet balance is low. Contact the admin to recharge. Admin Contact Info: 0{admin}'})
-        elif user.wallet <= 0 or user.wallet < float(amount):
-            return JsonResponse(
-                {'status': f'Your wallet balance is low. Contact the admin to recharge. Admin Contact Info: 0{admin}'})
-        print(phone_number)
-        print(amount)
-        print(reference)
+                {'status': f'Your wallet balance is low. Contact the admin to recharge. Admin Contact Info: 0{admin_phone}'})
 
-        if user.status == "User":
-            bundle = models.IshareBundlePrice.objects.get(price=float(amount)).bundle_volume
-        elif user.status == "Agent":
+        if user.status == "Agent":
             bundle = models.AgentIshareBundlePrice.objects.get(price=float(amount)).bundle_volume
         elif user.status == "Super Agent":
             bundle = models.SuperAgentIshareBundlePrice.objects.get(price=float(amount)).bundle_volume
         else:
             bundle = models.IshareBundlePrice.objects.get(price=float(amount)).bundle_volume
 
-        # print(bundle)
-        # send_bundle_response = helper.send_bundle(request.user, phone_number, bundle, reference)
-        # print(send_bundle_response)
-        #
-        # sms_headers = {
-        #     'Authorization': 'Bearer 1136|LwSl79qyzTZ9kbcf9SpGGl1ThsY0Ujf7tcMxvPze',
-        #     'Content-Type': 'application/json'
-        # }
-        #
-        # sms_url = 'https://webapp.usmsgh.com/api/sms/send'
-        send_bundle_response = helper.send_bundle(phone_number, bundle, reference)
-        try:
-            data = send_bundle_response.json()
-            print(data)
-        except:
-            return JsonResponse({'status': f'Something went wrong'})
+        user.wallet -= float(amount)
+        user.save()
 
-        sms_headers = {
-            'Authorization': 'Bearer 1334|wroIm5YnQD6hlZzd8POtLDXxl4vQodCZNorATYGX',
-            'Content-Type': 'application/json'
-        }
+        new_transaction = models.IShareBundleTransaction.objects.create(
+            user=request.user,
+            bundle_number=phone_number,
+            offer=f"{bundle}MB",
+            reference=reference,
+            transaction_status="Pending",
+        )
 
-        sms_url = 'https://webapp.usmsgh.com/api/sms/send'
-        if send_bundle_response.status_code == 200:
-            if data["status"] == "Success":
-                new_transaction = models.IShareBundleTransaction.objects.create(
-                    user=request.user,
-                    bundle_number=phone_number,
-                    offer=f"{bundle}MB",
-                    reference=reference,
-                    transaction_status="Completed"
-                )
-                new_transaction.save()
-                user.wallet -= float(amount)
-                user.save()
-                receiver_message = f"Your bundle purchase has been completed successfully. {bundle}MB has been credited to you by {request.user.phone}.\nReference: {reference}\n"
-                sms_message = f"Hello @{request.user.username}. Your bundle purchase has been completed successfully. {bundle}MB has been credited to {phone_number}.\nReference: {reference}\nCurrent Wallet Balance: {user.wallet}\nThank you for using CampusData."
-
-                # num_without_0 = phone_number[1:]
-                # print(num_without_0)
-                # receiver_body = {
-                #     'recipient': f"233{num_without_0}",
-                #     'sender_id': 'CampusData',
-                #     'message': receiver_message
-                # }
-                #
-                # response = requests.request('POST', url=sms_url, params=receiver_body, headers=sms_headers)
-                # print(response.text)
-                #
-                # sms_body = {
-                #     'recipient': f"233{request.user.phone}",
-                #     'sender_id': 'CampusData',
-                #     'message': sms_message
-                # }
-                #
-                # response = requests.request('POST', url=sms_url, params=sms_body, headers=sms_headers)
-                #
-                # print(response.text)
-                response1 = requests.get(
-                    f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{request.user.phone}&from=CampusData&sms={sms_message}")
-                print(response1.text)
-
-                response2 = requests.get(
-                    f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to={phone_number}&from=CampusData&sms={receiver_message}")
-                print(response2.text)
-
-                return JsonResponse({'status': 'Transaction Completed Successfully', 'icon': 'success'})
-            else:
-                new_transaction = models.IShareBundleTransaction.objects.create(
-                    user=request.user,
-                    bundle_number=phone_number,
-                    offer=f"{bundle}MB",
-                    reference=reference,
-                    transaction_status="Failed"
-                )
-                new_transaction.save()
-                return JsonResponse({'status': 'Something went wrong', 'icon': 'error'})
-        else:
-            new_transaction = models.IShareBundleTransaction.objects.create(
-                user=request.user,
-                bundle_number=phone_number,
-                offer=f"{bundle}MB",
-                reference=reference,
-                transaction_status="Failed"
+        if _api_enabled(geosams.NETWORK_AT):
+            msg, rejected = _submit_to_geosams(
+                new_transaction, geosams.NETWORK_AT, phone_number, bundle, reference
             )
-            new_transaction.save()
-            return JsonResponse({'status': 'Something went wrong', 'icon': 'error'})
+            if rejected:
+                user.wallet += float(amount)
+                user.save()
+                return JsonResponse({'status': msg, 'icon': 'error'})
+            return JsonResponse({'status': msg, 'icon': 'success'})
+
+        return JsonResponse({'status': "Your transaction will be completed shortly", 'icon': 'success'})
     return redirect('airtel-tigo')
 
 
@@ -319,71 +293,44 @@ def airtel_tigo(request):
 
 def mtn_pay_with_wallet(request):
     if request.method == "POST":
-        admin = models.AdminInfo.objects.filter().first().phone_number
+        admin_info = models.AdminInfo.objects.filter().first()
+        admin_phone = admin_info.phone_number if admin_info else ""
         user = models.CustomUser.objects.get(id=request.user.id)
         phone_number = request.POST.get("phone")
         amount = request.POST.get("amount")
         reference = request.POST.get("reference")
-        print(phone_number)
-        print(amount)
-        print(reference)
-        sms_headers = {
-            'Authorization': 'Bearer 1136|LwSl79qyzTZ9kbcf9SpGGl1ThsY0Ujf7tcMxvPze',
-            'Content-Type': 'application/json'
-        }
 
-        sms_url = 'https://webapp.usmsgh.com/api/sms/send'
-        admin = models.AdminInfo.objects.filter().first().phone_number
+        if user.wallet is None or user.wallet <= 0 or user.wallet < float(amount):
+            return JsonResponse(
+                {'status': f'Your wallet balance is low. Contact the admin to recharge. Admin Contact Info: 0{admin_phone}'})
 
-        if user.wallet is None:
-            return JsonResponse(
-                {'status': f'Your wallet balance is low. Contact the admin to recharge. Admin Contact Info: 0{admin}'})
-        elif user.wallet <= 0 or user.wallet < float(amount):
-            return JsonResponse(
-                {'status': f'Your wallet balance is low. Contact the admin to recharge. Admin Contact Info: 0{admin}'})
-        if user.status == "User":
-            bundle = models.MTNBundlePrice.objects.get(price=float(amount)).bundle_volume
-        elif user.status == "Agent":
+        if user.status == "Agent":
             bundle = models.AgentMTNBundlePrice.objects.get(price=float(amount)).bundle_volume
         elif user.status == "Super Agent":
             bundle = models.SuperAgentMTNBundlePrice.objects.get(price=float(amount)).bundle_volume
         else:
             bundle = models.MTNBundlePrice.objects.get(price=float(amount)).bundle_volume
-        print(bundle)
-        import requests
 
-        url = "https://www.geosams.com/api/initiate_mtn_transaction"
+        user.wallet -= float(amount)
+        user.save()
 
-        payload = {'receiver': str(phone_number),
-                   'reference': str(reference),
-                   'bundle_volume': str(bundle)}
-        files = [
-
-        ]
-        headers = {
-            'api-key': config("MTN_KEY")
-        }
-
-        response = requests.request("POST", url, headers=headers, data=payload, files=files)
-
-        print(response.text)
-        sms_message = f"An order has been placed. {bundle}MB for {phone_number}"
         new_mtn_transaction = models.MTNTransaction.objects.create(
             user=request.user,
             bundle_number=phone_number,
             offer=f"{bundle}MB",
             reference=reference,
         )
-        new_mtn_transaction.save()
-        user.wallet -= float(amount)
-        user.save()
-        sms_body = {
-            'recipient': f"233{admin}",
-            'sender_id': 'Geosams',
-            'message': sms_message
-        }
-        # response = requests.request('POST', url=sms_url, params=sms_body, headers=sms_headers)
-        # print(response.text)
+
+        if _api_enabled(geosams.NETWORK_MTN):
+            msg, rejected = _submit_to_geosams(
+                new_mtn_transaction, geosams.NETWORK_MTN, phone_number, bundle, reference
+            )
+            if rejected:
+                user.wallet += float(amount)
+                user.save()
+                return JsonResponse({'status': msg, 'icon': 'error'})
+            return JsonResponse({'status': msg, 'icon': 'success'})
+
         return JsonResponse({'status': "Your transaction will be completed shortly", 'icon': 'success'})
     return redirect('mtn')
 
@@ -870,39 +817,52 @@ def topup_info(request):
     #     checkoutUrl = data['data']['checkoutUrl']
     #
     #     return redirect(checkoutUrl)
+    admin_info = models.AdminInfo.objects.filter().first()
+    macrodroid_on = admin_info.macrodroid_enabled if admin_info else True
+
     if request.method == "POST":
-        admin = models.AdminInfo.objects.filter().first().phone_number
-        user = models.CustomUser.objects.get(id=request.user.id)
         amount = request.POST.get("amount")
-        print(amount)
         reference = helper.top_up_ref_generator()
-        new_topup_request = models.TopUpRequestt.objects.create(
+        models.TopUpRequestt.objects.create(
             user=request.user,
             amount=amount,
             reference=reference,
         )
-        new_topup_request.save()
 
-        sms_headers = {
-            'Authorization': 'Bearer 1136|LwSl79qyzTZ9kbcf9SpGGl1ThsY0Ujf7tcMxvPze',
-            'Content-Type': 'application/json'
-        }
+        if macrodroid_on:
+            messages.success(
+                request,
+                f"Request created. Pay GHS {amount} to the number below, then paste the "
+                f"Transaction ID from your MoMo SMS to credit your wallet instantly."
+            )
+            return redirect("claim_topup", reference=reference)
 
-        sms_url = 'https://webapp.usmsgh.com/api/sms/send'
-
-        messages.success(request, f"Your Request has been sent successfully. Kindly go on to pay to {admin} and use the reference stated as reference. Reference: {reference}")
+        admin_phone = admin_info.phone_number if admin_info else ""
+        messages.success(
+            request,
+            f"Your request has been sent. Kindly pay to {admin_phone} and quote the "
+            f"reference. Reference: {reference}"
+        )
         return redirect("request_successful", reference)
-    return render(request, "layouts/topup-info.html")
+
+    context = {
+        "macrodroid_on": macrodroid_on,
+        "business_momo_number": f"0{admin_info.momo_numberr}" if admin_info and admin_info.momo_numberr else "",
+        "business_momo_name": admin_info.name if admin_info else "",
+        "channel": admin_info.payment_channell if admin_info else "",
+    }
+    return render(request, "layouts/topup-info.html", context=context)
 
 
 @login_required(login_url='login')
 def request_successful(request, reference):
     admin = models.AdminInfo.objects.filter().first()
     context = {
-        "name": admin.name,
-        "number": f"0{admin.momo_numberr}",
-        "channel": admin.payment_channell,
-        "reference": reference
+        "name": admin.name if admin else "",
+        "number": f"0{admin.momo_numberr}" if admin and admin.momo_numberr else "",
+        "channel": admin.payment_channell if admin else "",
+        "reference": reference,
+        "macrodroid_on": admin.macrodroid_enabled if admin else True,
     }
     return render(request, "layouts/services/request_successful.html", context=context)
 
@@ -993,116 +953,82 @@ def hubtel_webhook(request):
                 if transaction_channel == "ishare":
                     offer = transaction_details["offers"]
                     phone_number = transaction_details["phone_number"]
+                    phone_str = f"0{phone_number}"
 
-                    if user.status == "User":
-                        bundle = models.IshareBundlePrice.objects.get(price=float(offer)).bundle_volume
-                    elif user.status == "Agent":
+                    if user.status == "Agent":
                         bundle = models.AgentIshareBundlePrice.objects.get(price=float(offer)).bundle_volume
                     elif user.status == "Super Agent":
                         bundle = models.SuperAgentIshareBundlePrice.objects.get(price=float(offer)).bundle_volume
                     else:
                         bundle = models.IshareBundlePrice.objects.get(price=float(offer)).bundle_volume
+
                     new_transaction = models.IShareBundleTransaction.objects.create(
                         user=user,
                         bundle_number=phone_number,
                         offer=f"{bundle}MB",
                         reference=reference,
-                        transaction_status="Pending"
+                        transaction_status="Pending",
                     )
-                    print("created")
-                    new_transaction.save()
 
-                    print("===========================")
-                    print(phone_number)
-                    print(bundle)
-                    print(user)
-                    print(reference)
-                    send_bundle_response = helper.send_bundle(user, f"0{phone_number}", bundle, reference)
-                    # data = send_bundle_response.json()
-                    #
-                    # print(data)
-
-                    sms_headers = {
-                        'Authorization': 'Bearer 1136|LwSl79qyzTZ9kbcf9SpGGl1ThsY0Ujf7tcMxvPze',
-                        'Content-Type': 'application/json'
-                    }
-
-                    sms_url = 'https://webapp.usmsgh.com/api/sms/send'
-
-                    if send_bundle_response != "bad response":
-                        print("good response")
-                        if send_bundle_response["data"]["request_status_code"] == "200" or send_bundle_response["request_message"] == "Successful":
-                            transaction_to_be_updated = models.IShareBundleTransaction.objects.get(
-                                reference=reference)
-                            print("got here")
-                            print(transaction_to_be_updated.transaction_status)
-                            transaction_to_be_updated.transaction_status = "Completed"
-                            transaction_to_be_updated.save()
-                            print(user.phone)
-                            print("***********")
-                            receiver_message = f"Your bundle purchase has been completed successfully. {bundle}MB has been credited to you by {user.phone}.\nReference: {reference}\n"
-                            sms_message = f"Hello @{user.username}. Your bundle purchase has been completed successfully. {bundle}MB has been credited to {phone_number}.\nReference: {reference}\n"
-
-                            response1 = requests.get(
-                                f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to=0{user.phone}&from=CampusData&sms={sms_message}")
-                            print(response1.text)
-
-                            response2 = requests.get(
-                                f"https://sms.arkesel.com/sms/api?action=send-sms&api_key=UnBzemdvanJyUGxhTlJzaVVQaHk&to={phone_number}&from=CampusData&sms={receiver_message}")
-                            print(response2.text)
-                            return JsonResponse({'status': 'Transaction Completed Successfully'}, status=200)
-                        else:
-                            transaction_to_be_updated = models.IShareBundleTransaction.objects.get(
-                                reference=reference)
-                            transaction_to_be_updated.transaction_status = "Failed"
-                            new_transaction.save()
-                            sms_message = f"Hello @{user.username}. Something went wrong with your transaction. Contact us for enquiries.\nBundle: {bundle}MB\nPhone Number: {phone_number}.\nReference: {reference}\n"
-
-                            sms_body = {
-                                'recipient': f"233{user.phone}",
-                                'sender_id': 'Data4All',
-                                'message': sms_message
-                            }
-                            return JsonResponse({'status': 'Something went wrong'}, status=500)
-                    else:
-                        transaction_to_be_updated = models.IShareBundleTransaction.objects.get(
-                            reference=reference)
-                        transaction_to_be_updated.transaction_status = "Failed"
-                        new_transaction.save()
-                        sms_message = f"Hello @{user.username}. Something went wrong with your transaction. Contact us for enquiries.\nBundle: {bundle}MB\nPhone Number: {phone_number}.\nReference: {reference}\n"
-
-                        sms_body = {
-                            'recipient': f'233{user.phone}',
-                            'sender_id': 'Data4All',
-                            'message': sms_message
-                        }
-
-                        # response = requests.request('POST', url=sms_url, params=sms_body, headers=sms_headers)
-                        #
-                        # print(response.text)
-                        return JsonResponse({'status': 'Something went wrong', 'icon': 'error'})
+                    if _api_enabled(geosams.NETWORK_AT):
+                        _submit_to_geosams(
+                            new_transaction, geosams.NETWORK_AT, phone_str, bundle, reference
+                        )
+                    return JsonResponse(
+                        {'status': "Your transaction will be completed shortly"}, status=200,
+                    )
                 elif transaction_channel == "mtn":
                     offer = transaction_details["offers"]
                     phone_number = transaction_details["phone_number"]
+                    phone_str = f"0{phone_number}"
 
-                    if user.status == "User":
-                        bundle = models.MTNBundlePrice.objects.get(price=float(offer)).bundle_volume
-                    elif user.status == "Agent":
+                    if user.status == "Agent":
                         bundle = models.AgentMTNBundlePrice.objects.get(price=float(offer)).bundle_volume
                     elif user.status == "Super Agent":
                         bundle = models.SuperAgentMTNBundlePrice.objects.get(price=float(offer)).bundle_volume
                     else:
                         bundle = models.MTNBundlePrice.objects.get(price=float(offer)).bundle_volume
 
-                    print(phone_number)
                     new_mtn_transaction = models.MTNTransaction.objects.create(
                         user=user,
                         bundle_number=phone_number,
                         offer=f"{bundle}MB",
                         reference=reference,
                     )
-                    new_mtn_transaction.save()
-                    return JsonResponse({'status': "Your transaction will be completed shortly"}, status=200)
+
+                    if _api_enabled(geosams.NETWORK_MTN):
+                        _submit_to_geosams(
+                            new_mtn_transaction, geosams.NETWORK_MTN, phone_str, bundle, reference
+                        )
+                    return JsonResponse(
+                        {'status': "Your transaction will be completed shortly"}, status=200,
+                    )
+                elif transaction_channel == "telecel":
+                    offer = transaction_details["offers"]
+                    phone_number = transaction_details["phone_number"]
+                    phone_str = f"0{phone_number}"
+
+                    if user.status == "Agent":
+                        bundle = models.AgentVodaBundlePrice.objects.get(price=float(offer)).bundle_volume
+                    elif user.status == "Super Agent":
+                        bundle = models.SuperAgentVodaBundlePrice.objects.get(price=float(offer)).bundle_volume
+                    else:
+                        bundle = models.VodaBundlePrice.objects.get(price=float(offer)).bundle_volume
+
+                    new_voda_transaction = models.VodafoneTransaction.objects.create(
+                        user=user,
+                        bundle_number=phone_number,
+                        offer=f"{bundle}MB",
+                        reference=reference,
+                    )
+
+                    if _api_enabled(geosams.NETWORK_TELECEL):
+                        _submit_to_geosams(
+                            new_voda_transaction, geosams.NETWORK_TELECEL, phone_str, bundle, reference
+                        )
+                    return JsonResponse(
+                        {'status': "Your transaction will be completed shortly"}, status=200,
+                    )
                 elif transaction_channel == "bigtime":
                     offer = transaction_details["offers"]
                     phone_number = transaction_details["phone_number"]
@@ -1283,50 +1209,38 @@ def voda_pay_with_wallet(request):
         phone_number = request.POST.get("phone")
         amount = request.POST.get("amount")
         reference = request.POST.get("reference")
-        print(phone_number)
-        print(amount)
-        print(reference)
-        if user.wallet is None:
+
+        if user.wallet is None or user.wallet <= 0 or user.wallet < float(amount):
             return JsonResponse(
-                {'status': f'Your wallet balance is low. Contact the admin to recharge.'})
-        elif user.wallet <= 0 or user.wallet < float(amount):
-            return JsonResponse(
-                {'status': f'Your wallet balance is low. Contact the admin to recharge.'})
-        if user.status == "User":
-            bundle = models.VodaBundlePrice.objects.get(price=float(amount)).bundle_volume
-        elif user.status == "Agent":
+                {'status': 'Your wallet balance is low. Contact the admin to recharge.'})
+
+        if user.status == "Agent":
             bundle = models.AgentVodaBundlePrice.objects.get(price=float(amount)).bundle_volume
         elif user.status == "Super Agent":
             bundle = models.SuperAgentVodaBundlePrice.objects.get(price=float(amount)).bundle_volume
         else:
             bundle = models.VodaBundlePrice.objects.get(price=float(amount)).bundle_volume
 
-        print(bundle)
-        new_mtn_transaction = models.VodafoneTransaction.objects.create(
+        user.wallet -= float(amount)
+        user.save()
+
+        new_voda_transaction = models.VodafoneTransaction.objects.create(
             user=request.user,
             bundle_number=phone_number,
             offer=f"{bundle}MB",
             reference=reference,
         )
-        new_mtn_transaction.save()
-        user.wallet -= float(amount)
-        user.save()
 
-        url = "https://www.geosams.com/api/initiate_telecel_transaction"
+        if _api_enabled(geosams.NETWORK_TELECEL):
+            msg, rejected = _submit_to_geosams(
+                new_voda_transaction, geosams.NETWORK_TELECEL, phone_number, bundle, reference
+            )
+            if rejected:
+                user.wallet += float(amount)
+                user.save()
+                return JsonResponse({'status': msg, 'icon': 'error'})
+            return JsonResponse({'status': msg, 'icon': 'success'})
 
-        payload = {'receiver': str(phone_number),
-                   'reference': str(reference),
-                   'bundle_volume': str(bundle)}
-        files = [
-
-        ]
-        headers = {
-            'api-key': config("MTN_KEY")
-        }
-
-        response = requests.request("POST", url, headers=headers, data=payload, files=files)
-
-        print(response.text)
         return JsonResponse({'status': "Your transaction will be completed shortly", 'icon': 'success'})
     return redirect('voda')
 
@@ -1375,5 +1289,147 @@ def admin_voda_history(request):
     else:
         messages.error(request, "Access Denied")
         return redirect('voda_admin')
+
+
+@csrf_exempt
+def momo_webhook_receiver(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    secret = request.headers.get("X-Secret-Key")
+    if MACRODROID_SECRET is None or secret != MACRODROID_SECRET:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid json"}, status=400)
+
+    sms_body = data.get("sms_body", "")
+    sender = data.get("sender", "")
+    received_at = data.get("timestamp", "")
+
+    try:
+        txn_id, amount = parse_momo_sms(sms_body)
+
+        if not txn_id:
+            models.MobileMoneyAlert.objects.create(
+                raw_sms_body=sms_body,
+                sender_address=sender,
+                received_at_phone=received_at,
+                status="Ignored",
+            )
+            return JsonResponse({"status": "ignored", "reason": "No ID found"})
+
+        with db_transaction.atomic():
+            alert, created = models.MobileMoneyAlert.objects.get_or_create(
+                transaction_id=txn_id,
+                defaults={
+                    "raw_sms_body": sms_body,
+                    "sender_address": sender,
+                    "received_at_phone": received_at,
+                    "amount": Decimal(str(amount)),
+                    "status": "Unclaimed",
+                },
+            )
+            if not created:
+                return JsonResponse({"status": "duplicate", "message": "Already received"})
+
+        return JsonResponse({"status": "success", "id": txn_id})
+
+    except Exception as e:
+        logger.exception("MoMo webhook error")
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@login_required(login_url='login')
+def claim_topup(request, reference):
+    topup_req = get_object_or_404(
+        models.TopUpRequestt, reference=reference, user=request.user
+    )
+    admin = models.AdminInfo.objects.filter().first()
+
+    if request.method == "POST":
+        txn_id = request.POST.get("transaction_id", "").strip()
+        if not txn_id:
+            messages.error(request, "Please enter the Transaction ID from your SMS.")
+            return redirect("claim_topup", reference=reference)
+
+        try:
+            with db_transaction.atomic():
+                topup_req = models.TopUpRequestt.objects.select_for_update().get(
+                    id=topup_req.id
+                )
+                if topup_req.status:
+                    messages.info(request, "This top-up request has already been completed.")
+                    return redirect("home")
+
+                alert = (
+                    models.MobileMoneyAlert.objects.select_for_update()
+                    .filter(transaction_id=txn_id)
+                    .first()
+                )
+
+                if not alert:
+                    messages.error(request, "Transaction ID not found. If you just paid, wait a moment and try again.")
+                    return redirect("claim_topup", reference=reference)
+                if alert.status == "Claimed":
+                    messages.error(request, "This Transaction ID has already been used.")
+                    return redirect("claim_topup", reference=reference)
+                if alert.status in ("Ignored", "Expired"):
+                    messages.error(request, "This transaction data is invalid or expired.")
+                    return redirect("claim_topup", reference=reference)
+
+                if timezone.now() - alert.created_at > timedelta(hours=24):
+                    alert.status = "Expired"
+                    alert.save()
+                    messages.error(
+                        request,
+                        "This transaction has expired (older than 24 hours). Contact support.",
+                    )
+                    return redirect("claim_topup", reference=reference)
+
+                amount_paid = Decimal(str(alert.amount))
+                expected_price = Decimal(str(topup_req.amount))
+                if amount_paid != expected_price:
+                    messages.error(
+                        request,
+                        f"Amount mismatch. You requested GHS {expected_price}, "
+                        f"but the SMS shows GHS {amount_paid}. Contact admin if this is wrong.",
+                    )
+                    return redirect("claim_topup", reference=reference)
+
+                alert.status = "Claimed"
+                alert.claimed_by = request.user
+                alert.claimed_at = timezone.now()
+                alert.save()
+
+                topup_req.status = True
+                topup_req.credited_at = timezone.now()
+                topup_req.save()
+
+                user = models.CustomUser.objects.select_for_update().get(id=request.user.id)
+                user.wallet = (user.wallet or 0.0) + float(alert.amount)
+                user.save()
+
+            messages.success(
+                request,
+                f"Success! GHS {alert.amount} has been added to your wallet.",
+            )
+            return redirect("home")
+
+        except Exception:
+            logger.exception("claim_topup failed for reference=%s", reference)
+            messages.error(request, "System error processing claim. Please try again or contact support.")
+            return redirect("claim_topup", reference=reference)
+
+    context = {
+        "topup_req": topup_req,
+        "reference": reference,
+        "business_momo_number": f"0{admin.momo_numberr}" if admin and admin.momo_numberr else "",
+        "business_momo_name": admin.name if admin else "",
+        "channel": admin.payment_channell if admin else "",
+    }
+    return render(request, "layouts/services/claim_topup.html", context=context)
 
 

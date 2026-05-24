@@ -1,0 +1,13 @@
+.env
+CLAUDE.md
+MACRODROID_MOMO_INTEGRATION.md
+GEOSAMS_CONTROLLER_INTEGRATION.md
+
+__pycache__/
+*.pyc
+*.pyo
+db.sqlite3
+assets/
+*.egg-info/
+.venv/
+venv/

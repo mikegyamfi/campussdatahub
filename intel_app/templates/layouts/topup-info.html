@@ -1,56 +1,237 @@
 {% extends 'base.html' %}
 
-  {% block content %}
-  {% include 'inc/header.html' %}
+{% block content %}
+{% include 'inc/header.html' %}
 
-  <header>
-    {% include 'inc/header.html' %}
+<style>
+  .howto-section {
+    background: linear-gradient(135deg, #f5f3ff 0%, #eef2ff 100%);
+    border-radius: 18px;
+    padding: 2.5rem 1.5rem;
+  }
+  .step-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.5rem 1rem;
+    height: 100%;
+    box-shadow: 0 4px 18px rgba(108, 85, 249, 0.06);
+    transition: transform .25s ease, box-shadow .25s ease;
+    position: relative;
+  }
+  .step-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(108, 85, 249, 0.12);
+  }
+  .step-number {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    border-radius: 50%;
+    background: #6C55F9;
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(108, 85, 249, 0.4);
+  }
+  .step-icon {
+    width: 56px;
+    height: 56px;
+    line-height: 56px;
+    border-radius: 50%;
+    background: rgba(108, 85, 249, 0.10);
+    color: #6C55F9;
+    font-size: 22px;
+    text-align: center;
+    margin: 0.5rem auto 1rem;
+  }
+  .step-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.35rem;
+  }
+  .step-body {
+    font-size: 0.83rem;
+    color: #6c757d;
+    margin: 0;
+    min-height: 2.6rem;
+  }
+  .topup-form-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+  }
+  .business-momo-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(108, 85, 249, 0.08);
+    color: #4a3bd1;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    font-weight: 500;
+    margin-top: 0.5rem;
+  }
+  .business-momo-pill .num {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .amount-input {
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-align: center;
+    border: 2px solid #e9e8f5;
+    border-radius: 12px;
+    padding: 0.9rem;
+    transition: border-color .2s ease;
+  }
+  .amount-input:focus {
+    border-color: #6C55F9;
+    box-shadow: 0 0 0 0.2rem rgba(108, 85, 249, 0.15);
+    outline: none;
+  }
+  .btn-request {
+    background: linear-gradient(135deg, #6C55F9 0%, #8e7cff 100%);
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    padding: 0.85rem 0;
+    border-radius: 12px;
+    width: 100%;
+    box-shadow: 0 4px 14px rgba(108, 85, 249, 0.35);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn-request:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(108, 85, 249, 0.45);
+    color: #fff;
+  }
+  .legacy-banner {
+    background: #fff8e6;
+    border-left: 4px solid #f0ad4e;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    color: #6b4f1d;
+  }
+</style>
 
-    <div class="container mt-5">
-      <div class="page-banner">
-        <div class="row justify-content-center align-items-center h-100">
-          <div class="col-md-6">
-            <nav aria-label="Breadcrumb">
-              <ul class="breadcrumb justify-content-center py-0 bg-transparent">
-                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
-                <li class="breadcrumb-item active"><a href="{% url 'services' %}">Services</a></li>
-                <li class="breadcrumb-item active">Top Up</li>
-              </ul>
-            </nav>
-            <h1 class="text-center">Request for Wallet Top Up</h1>
+<main>
+  <div class="page-section" id="services">
+    <div class="container">
+
+      {% if macrodroid_on %}
+
+      <div class="howto-section wow fadeInUp mb-5">
+        <div class="text-center mb-4">
+          <div class="subhead">How it Works</div>
+          <h2 class="title-section">Recharge in <span class="marked">5 quick steps</span></h2>
+          <div class="divider mx-auto"></div>
+          {% if business_momo_number %}
+          <div class="business-momo-pill">
+            <i class="fa-solid fa-mobile-screen-button"></i>
+            <span>You'll pay <span class="num">{{ business_momo_number }}</span>{% if business_momo_name %} &middot; {{ business_momo_name }}{% endif %}</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-6 col-md-4 col-lg py-3 wow fadeInUp" data-wow-delay="0.05s">
+            <div class="step-card text-center">
+              <div class="step-number">1</div>
+              <div class="step-icon"><i class="fa-solid fa-coins"></i></div>
+              <div class="step-title">Enter amount</div>
+              <p class="step-body">Choose how much GHS to add and click Request.</p>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg py-3 wow fadeInUp" data-wow-delay="0.15s">
+            <div class="step-card text-center">
+              <div class="step-number">2</div>
+              <div class="step-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+              <div class="step-title">Pay via MoMo</div>
+              <p class="step-body">Send the same amount to our number from your phone.</p>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg py-3 wow fadeInUp" data-wow-delay="0.25s">
+            <div class="step-card text-center">
+              <div class="step-number">3</div>
+              <div class="step-icon"><i class="fa-solid fa-envelope"></i></div>
+              <div class="step-title">Get SMS</div>
+              <p class="step-body">MobileMoney texts a Transaction ID to your phone.</p>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg py-3 wow fadeInUp" data-wow-delay="0.35s">
+            <div class="step-card text-center">
+              <div class="step-number">4</div>
+              <div class="step-icon"><i class="fa-solid fa-paste"></i></div>
+              <div class="step-title">Paste the ID</div>
+              <p class="step-body">Copy the 10&ndash;12 digit ID and paste it on the next page.</p>
+            </div>
+          </div>
+          <div class="col-12 col-md-4 col-lg py-3 wow fadeInUp" data-wow-delay="0.45s">
+            <div class="step-card text-center">
+              <div class="step-number">5</div>
+              <div class="step-icon" style="background: rgba(40, 167, 69, 0.10); color: #28a745;"><i class="fa-solid fa-bolt"></i></div>
+              <div class="step-title">Wallet credited</div>
+              <p class="step-body">Funds land instantly. No waiting on an admin.</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="small text-center text-muted mt-3 mb-0">
+          <i class="fa-solid fa-shield-halved mr-1"></i>
+          Pay the exact amount. Each Transaction ID can only be claimed once &mdash; treat it like a password.
+        </p>
+      </div>
+
+      {% else %}
+
+      <div class="text-center mb-4 wow fadeInUp">
+        <div class="subhead">Manual Top Up</div>
+        <h2 class="title-section">Pay and Get Your <span class="marked">Wallet</span> Recharged</h2>
+        <div class="divider mx-auto"></div>
+      </div>
+      <div class="legacy-banner mb-4 wow fadeInUp">
+        <strong><i class="fa-solid fa-circle-info mr-2"></i>Heads up:</strong>
+        Submit a request below, then pay to our admin number using the reference shown on the next page.
+        An admin will manually confirm your payment and credit your wallet shortly after.
+      </div>
+
+      {% endif %}
+
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-7 col-lg-6 wow fadeInUp">
+          <div class="card topup-form-card">
+            <div class="card-body p-4 p-md-5">
+              <h5 class="text-center mb-1">{% if macrodroid_on %}Ready? Enter your amount{% else %}Request Wallet Top Up{% endif %}</h5>
+              <p class="text-center text-muted small mb-4">Minimum GHS 1. The amount must match what you'll pay via MoMo.</p>
+              <form action="" method="post">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                  <input name="amount" class="form-control amount-input" type="number" step="0.1" min="1" placeholder="GHS 0.00" autofocus required>
+                </div>
+                <button type="submit" class="btn btn-request">
+                  {% if macrodroid_on %}
+                    Request &amp; Continue <i class="fa-solid fa-arrow-right ml-1"></i>
+                  {% else %}
+                    Request Top Up
+                  {% endif %}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
+
     </div>
-  </header>
-
-  <main>
-    <div class="page-section" id="services">
-      <div class="container">
-          <div class="text-center">
-              <h2 class="title-section">Pay and Get Your Wallet Recharged</h2>
-              <div class="divider mx-auto"></div>
-          </div>
-
-        <form action="" method="post">
-          {% csrf_token %}
-          <div class="form-group col-md-6">
-                <label>Amount Paid</label>
-                <input name="amount" class="form-control" type="number" step="0.1" placeholder="100" required>
-          </div>
-          <button type="submit" class="btn btn-primary">Request</button>
-        </form>
-
-      </div>
   </div> <!-- .page-section -->
-  </main>
+</main>
 
-  {% include 'inc/footer.html' %}
-
-
+{% include 'inc/footer.html' %}
 {% endblock %}
 
-
 {% block scripts %}
-
 {% endblock scripts %}

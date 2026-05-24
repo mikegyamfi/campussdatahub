@@ -19,6 +19,9 @@
           <li class="nav-item">
             <a href="{% url 'history' %}" class="nav-link">Dashboard</a>
           </li>
+          <li class="nav-item">
+            <a href="{% url 'topup-info' %}" class="nav-link"><strong>Top Up</strong></a>
+          </li>
           {% if request.user.is_superuser %}
           <li class="nav-item">
             <a href="{% url 'topup_list' %}" class="nav-link">Requests</a>
