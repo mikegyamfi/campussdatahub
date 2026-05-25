@@ -174,7 +174,7 @@ STATICFILES_DIRS = [BASE_DIR / 'intel_app/static']
 AUTH_USER_MODEL = 'intel_app.CustomUser'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
